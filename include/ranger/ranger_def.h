@@ -21,6 +21,12 @@
 #define SUPPORTS_AVX512 0
 #endif
 
+#if defined(__ARM_NEON)
+#define SUPPORTS_NEON 1
+#else
+#define SUPPORTS_NEON 0
+#endif
+
 #if SUPPORTS_SSE && defined(Enable_Ranger_SSE)
 #define USE_RANGER_SSE
 #include <xmmintrin.h>
@@ -34,4 +40,9 @@
 #if SUPPORTS_AVX512 && defined(Enable_Ranger_AVX)
 #define USE_RANGER_AVX512
 #include <immintrin.h>
+#endif
+
+#if SUPPORTS_NEON && defined(Enable_Ranger_NEON)
+#define USE_RANGER_NEON
+#include <arm_neon.h>
 #endif

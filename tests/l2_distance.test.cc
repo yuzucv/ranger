@@ -66,13 +66,25 @@ int main()
         result[5] = l2DistanceAVX<fsize>(feature1.data(), feature2.data());
     }
 #endif
+#ifdef USE_RANGER_NEON
+    {
+        Timer t;
+        result[6] = l2DistanceNEON(feature1.data(), feature2.data(), fsize);
+    }
+#endif
 
     std::cout << "normal l2 distance: " << result[0] << std::endl;
     std::cout << "4X l2 distance: " << result[1] << std::endl;
+#ifdef USE_RANGER_SSE
     std::cout << "SSE l2 distance: " << result[2] << std::endl;
     std::cout << "SSE l2 distance: " << result[3] << std::endl;
+#endif
+#ifdef USE_RANGER_AVX
     std::cout << "AVX l2 distance: " << result[4] << std::endl;
     std::cout << "AVX l2 distance: " << result[5] << std::endl;
-
+#endif
+#ifdef USE_RANGER_NEON
+    std::cout << "NEON l2 distance: " << result[6] << std::endl;
+#endif
     return 0;
 }

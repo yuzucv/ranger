@@ -326,5 +326,41 @@ inline float l2DistanceAVX512(const float* v1, const float* v2)
 }
 #endif
 
+#ifdef USE_RANGER_NEON
+inline float l2DistanceNEON(const float* v1, const float* v2, size_t len)
+{
+    float* pV1 = (float*)v1;
+    float* pV2 = (float*)v2;
+    float32x4_t sum = vdupq_n_f32(0.0f);
+
+    size_t i;
+    for (i = 0; i < len - 3; i += 4)
+    {
+        float32x4_t x1 = vld1q_f32(pV1);
+        float32x4_t x2 = vld1q_f32(pV2);
+        pV1 += 4;
+        pV2 += 4;
+
+        float32x4_t diff = vsubq_f32(x1, x2);
+        float32x4_t squared = vmulq_f32(diff, diff);
+        sum = vaddq_f32(sum, squared);
+    }
+
+    float32x2_t sum_low = vget_low_f32(sum);
+    float32x2_t sum_high = vget_high_f32(sum);
+    sum_low = vadd_f32(sum_low, sum_high);
+    float distance = vget_lane_f32(sum_low, 0);
+
+    // Calculate the remaining elements
+    for (; i < len; ++i)
+    {
+        float diff = v1[i] - v2[i];
+        distance += diff * diff;
+    }
+
+    return std::sqrt(distance);
+}
+#endif
+
 } // namespace ranger
 } // namespace yuzu
