@@ -1,0 +1,91 @@
+# cmake minimum required version
+cmake_minimum_required(VERSION 3.19)
+
+# project name
+project(ranger LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+set(ARTICRAFT_OUT "out")
+set(CMAKE_INSTALL_PREFIX "install")
+
+option(Enable_Ranger_SSE "SSE Instruction" ON)
+option(Enable_Ranger_AVX "AVX Instruction" ON)
+option(Enable_Ranger_NEON "NEON Instruction" ON)
+# add_compile_options(-march=native)
+
+# -----------------------------------------------------
+# Compile condition
+# -----------------------------------------------------
+if(NOT DEFINED ENABLE_RANGER_TESTS)
+  if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
+    if(NOT ANDROID)
+      set(ENABLE_RANGER_TESTS ON)
+    else()
+      set(ENABLE_RANGER_TESTS OFF)
+    endif()
+  else()
+    set(ENABLE_RANGER_TESTS OFF)
+  endif()
+endif()
+message(STATUS "BUILD Ranger TESTS: ${ENABLE_RANGER_TESTS}")
+
+if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
+  set(INTERNAL_RANGER OFF)
+else()
+  set(INTERNAL_RANGER ON)
+endif()
+
+# build type
+if(CMAKE_BUILD_TYPE AND (CMAKE_BUILD_TYPE STREQUAL "Debug"))
+  set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Wall -O0")
+  add_definitions(-DDEBUG -D_DEBUG -DDEBUG_MODE)
+  message("Debug mode:${CMAKE_C_FLAGS_DEBUG}")
+elseif(CMAKE_BUILD_TYPE AND (CMAKE_BUILD_TYPE STREQUAL "Release"))
+  set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -Wall -O3")
+  add_definitions(-DNDEBUG -DRELEASE_MODE -DNDEBUG_MODE)
+  message("Release mode:${CMAKE_C_FLAGS_RELEASE}")
+endif()
+
+if(CMAKE_SYSTEM_NAME MATCHES "Windows")
+  message("This is Windows.")
+  if(MSVC)
+    add_compile_options(/utf-8)
+    if(Enable_Ranger_SSE)
+      add_compile_options(/arch:SSE)
+    endif()
+    if(Enable_Ranger_AVX)
+      add_compile_options(/arch:AVX)
+    endif()
+    add_definitions(-D_CRT_SECURE_NO_WARNINGS -DUNICODE -D_UNICODE)
+  endif()
+elseif(CMAKE_SYSTEM_NAME MATCHES "Linux")
+  message("This is Linux.")
+  add_compile_options(-fPIC)
+elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
+  message("This is Mac OS X.")
+endif()
+
+file(GLOB_RECURSE SRC_NESTED src/*.cc)
+add_library(ranger OBJECT ${SRC_NESTED})
+add_library(yuzu::ranger ALIAS ranger)
+target_include_directories(ranger PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include)
+
+if(Enable_Ranger_SSE)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse -mfma")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -msse -mfma")
+  target_compile_definitions(ranger PUBLIC -DEnable_Ranger_SSE)
+endif()
+if(Enable_Ranger_AVX)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx2 -mfma")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mavx2 -mfma")
+  target_compile_definitions(ranger PUBLIC -DEnable_Ranger_AVX)
+endif()
+if(Enable_Ranger_NEON)
+  target_compile_definitions(ranger PUBLIC -DEnable_Ranger_NEON)
+endif()
+
+if(ENABLE_RANGER_TESTS)
+  add_subdirectory(tests)
+endif()
