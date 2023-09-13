@@ -1,4 +1,5 @@
 #pragma once
+#include <arm_neon.h>
 #include <cmath>
 #include <cstddef>
 
@@ -23,7 +24,6 @@ inline float l2Distance(const float* v1, const float* v2, size_t len)
     return std::sqrt(distance);
 }
 
-#pragma region SSE指令集加速欧式距离计算
 template <size_t N>
 inline float l2DistanceX4(const float* v1, const float* v2)
 {
@@ -159,7 +159,6 @@ inline float l2DistanceSSE(const float* v1, const float* v2)
     return std::sqrt(distance);
 }
 #endif
-#pragma endregion
 
 #ifdef USE_RANGER_AVX
 inline float l2DistanceAVX(const float* v1, const float* v2, size_t len)
@@ -346,10 +345,9 @@ inline float l2DistanceNEON(const float* v1, const float* v2, size_t len)
         sum = vaddq_f32(sum, squared);
     }
 
-    float32x2_t sum_low = vget_low_f32(sum);
-    float32x2_t sum_high = vget_high_f32(sum);
-    sum_low = vadd_f32(sum_low, sum_high);
-    float distance = vget_lane_f32(sum_low, 0);
+    float result[4];
+    vst1q_f32(result, sum);
+    float distance = result[0] + result[1] + result[2] + result[3];
 
     // Calculate the remaining elements
     for (; i < len; ++i)
