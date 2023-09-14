@@ -2,7 +2,7 @@
 #include <cmath>
 #include <cstddef>
 
-#include "ranger_def.h"
+#include "../ranger_def.h"
 
 namespace yuzu
 {

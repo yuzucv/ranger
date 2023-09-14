@@ -3,7 +3,7 @@
 #include <pillar/utility/timeit.h>
 #include <random>
 
-#include "ranger/dist_l2.h"
+#include "ranger/distance/l2.h"
 
 std::random_device rd;
 std::mt19937 gen(rd());
@@ -29,7 +29,7 @@ int main()
 
     auto feature1 = newTensor<FeatureDim>(dist);
     auto feature2 = newTensor<FeatureDim>(dist);
-    static_assert(feature1.size() == feature2.size(), "向量维度不匹配");
+    static_assert(feature1.size() == feature2.size(), "Vector dimensions do not match");
     constexpr auto fsize = feature1.size();
     constexpr auto epoch = 10;
 
